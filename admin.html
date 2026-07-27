@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CleanTurn · 管理员工作台原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  body { overflow: hidden; }
+  .layout { position: relative; z-index: 1; display: flex; height: 100vh; }
+
+  /* ---------- 侧栏 ---------- */
+  .side {
+    width: 224px; flex: none; background: var(--spruce-deep); color: #C9D6CE;
+    display: flex; flex-direction: column; padding: 22px 14px 16px;
+    background-image: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(232,161,60,.12), transparent);
+  }
+  .side .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; color: #F3EFE2; }
+  .side .brand .logo { width: 36px; height: 36px; border-radius: 11px; background: var(--amber); color: #3A2A0A; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 900; font-size: 18px; }
+  .side .brand b { font-family: var(--font-display); font-size: 17px; letter-spacing: .02em; }
+  .side .brand span { display: block; font-size: 10.5px; color: #8FA69B; letter-spacing: .12em; }
+  .side nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .side nav .group { font-size: 10.5px; letter-spacing: .14em; color: #7A948A; padding: 14px 10px 6px; }
+  .side nav button {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    border-radius: 10px; font-size: 13.5px; font-weight: 500; color: #C9D6CE;
+    transition: background .12s, color .12s; text-align: left;
+  }
+  .side nav button:hover { background: rgba(255,255,255,.06); color: #F3EFE2; }
+  .side nav button.on { background: rgba(232,161,60,.16); color: #F6D9A6; }
+  .side nav button .icon { width: 17px; height: 17px; }
+  .side nav button .pill { margin-left: auto; background: var(--clay); color: #fff; font-size: 10px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+  .side .foot { padding: 12px 8px 0; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #A8BAB0; }
+  .side .foot .avatar { width: 30px; height: 30px; font-size: 12px; background: #3D6B5C; }
+
+  /* ---------- 主区 ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar { padding: 18px 28px 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .topbar h1 { font-size: 21px; }
+  .topbar .sub { font-size: 12.5px; color: var(--ink-3); }
+  .topbar .right { display: flex; align-items: center; gap: 9px; }
+  .content { flex: 1; overflow-y: auto; padding: 4px 28px 40px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+
+  .grid-2 { display: grid; grid-template-columns: 1.7fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .panel-h { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; }
+  .panel-h h2 { font-size: 15px; }
+  .panel-h .hint { font-size: 11.5px; color: var(--ink-3); }
+
+  .queue-item { display: flex; gap: 10px; padding: 11px 18px; border-top: 1px solid #F0EBDD; font-size: 13px; align-items: flex-start; }
+  .queue-item .q-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; flex: none; }
+  .q-serious .q-dot { background: var(--st-serious); } .q-warn .q-dot { background: var(--st-warn); } .q-info .q-dot { background: var(--st-info); }
+  .queue-item b { font-size: 13.5px; }
+  .queue-item p { color: var(--ink-2); font-size: 12.5px; }
+
+  .issue-card { border-top: 1px solid #F0EBDD; padding: 13px 18px; font-size: 13px; }
+  .issue-card .ic-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .issue-photos { display: flex; gap: 6px; margin-top: 8px; }
+  .issue-photos .photo { width: 74px; aspect-ratio: 4/3; }
+
+  .sync-row { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 12.5px; border-top: 1px solid #F0EBDD; color: var(--ink-2); }
+  .sync-row .ok { color: var(--st-good); display: flex; }
+  .sync-row .icon { width: 15px; height: 15px; }
+
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-row .fbtn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line-strong); font-size: 12.5px; font-weight: 600; color: var(--ink-2); background: var(--card); }
+  .filter-row .fbtn.on { background: var(--spruce); border-color: var(--spruce); color: #F3EFE2; }
+
+  /* 房源详情侧滑 */
+  .drawer-mask { position: fixed; inset: 0; z-index: 80; background: rgba(20,30,26,.4); animation: fadeIn .18s; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 470px; max-width: 94vw; background: var(--bg); z-index: 85; box-shadow: -18px 0 50px rgba(20,30,26,.25); animation: drawerIn .28s cubic-bezier(.2,.85,.3,1); display: flex; flex-direction: column; }
+  @keyframes drawerIn { from { transform: translateX(100%); } to { transform: none; } }
+  .drawer .d-head { padding: 20px 22px 12px; display: flex; align-items: center; gap: 10px; }
+  .drawer .d-head h2 { font-size: 18px; flex: 1; }
+  .drawer .d-body { flex: 1; overflow-y: auto; padding: 0 22px 30px; }
+  .d-tabs { display: flex; gap: 4px; background: var(--bg-deep); border-radius: 999px; padding: 4px; margin-bottom: 14px; border: 1px solid var(--line); }
+  .d-tabs button { flex: 1; padding: 6px 4px; font-size: 12.5px; font-weight: 600; border-radius: 999px; color: var(--ink-2); }
+  .d-tabs button.on { background: var(--card-solid); color: var(--ink); box-shadow: var(--shadow-1); }
+  .kv { display: flex; justify-content: space-between; padding: 9px 2px; font-size: 13.5px; border-bottom: 1px solid #EFEADB; }
+  .kv:last-child { border-bottom: none; }
+  .kv .k { color: var(--ink-2); }
+  .kv .v { font-weight: 600; }
+
+  .photo-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .plib-card { padding: 9px; }
+  .plib-card .photo { margin-bottom: 8px; }
+  .plib-meta { font-size: 11.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 3px; }
+  .plib-meta b { font-size: 12.5px; color: var(--ink); }
+  .retain { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 6px; width: max-content; }
+  .retain-ok { background: var(--st-good-bg); color: #0A7A0A; }
+  .retain-soon { background: var(--st-warn-bg); color: var(--st-warn); }
+
+  .mobile-note { display: none; }
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    .layout { flex-direction: column; height: auto; }
+    .side { width: 100%; flex-direction: row; align-items: center; padding: 10px 14px; gap: 6px; overflow-x: auto; }
+    .side .brand { padding: 0 8px 0 0; }
+    .side .brand span, .side nav .group, .side .foot { display: none; }
+    .side nav { flex-direction: row; }
+    .side nav button span.txt { display: none; }
+    .content { padding: 4px 14px 40px; }
+    .topbar { padding: 12px 14px 8px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <span class="logo">扫</span>
+      <span><b>CleanTurn</b><span>OPERATIONS</span></span>
+    </a>
+    <nav id="nav"></nav>
+    <div class="foot"><span class="avatar">温</span><span>温经理 · 营运管理员</span></div>
+  </aside>
+  <main class="main">
+    <div class="topbar" id="topbar"></div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CleanTurn · PMS 清洁排程与房务回报系统 — PRD 与交互原型</title>
+<meta name="description" content="短租清洁排程系统的产品需求文档与可交互网页原型（演示数据均为虚构）">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .wrap { position: relative; z-index: 1; max-width: 1020px; margin: 0 auto; padding: 40px 22px 70px; }
+  .hero { text-align: center; padding: 30px 0 40px; }
+  .hero .mark {
+    width: 62px; height: 62px; border-radius: 18px; background: var(--spruce); color: #F3EFE2;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 900; font-size: 30px;
+    box-shadow: 0 14px 30px rgba(22,71,59,.3); margin-bottom: 18px;
+    position: relative;
+  }
+  .hero .mark::after {
+    content: ""; position: absolute; inset: -7px; border-radius: 23px;
+    border: 1.5px dashed var(--amber); opacity: .7;
+  }
+  .hero h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 900; line-height: 1.25; }
+  .hero h1 .en { display: block; font-size: 14px; letter-spacing: .35em; color: var(--clay); font-weight: 700; margin-bottom: 10px; }
+  .hero p.lead { max-width: 620px; margin: 14px auto 0; color: var(--ink-2); font-size: 15.5px; }
+  .hero .meta { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  .doors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
+  @media (max-width: 860px) { .doors { grid-template-columns: 1fr; } }
+  .door { display: flex; flex-direction: column; padding: 24px 22px 20px; position: relative; overflow: hidden; transition: transform .18s, box-shadow .18s; }
+  .door:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+  .door .d-ico { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .door .d-ico .icon { width: 23px; height: 23px; }
+  .door h2 { font-size: 19px; margin-bottom: 6px; }
+  .door p { font-size: 13.5px; color: var(--ink-2); flex: 1; }
+  .door .go { margin-top: 16px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: var(--spruce); }
+  .door::after { content: ""; position: absolute; right: -34px; top: -34px; width: 110px; height: 110px; border-radius: 50%; opacity: .12; }
+  .door-cleaner .d-ico { background: var(--spruce-soft); color: var(--spruce); }
+  .door-cleaner::after { background: var(--spruce); }
+  .door-admin .d-ico { background: var(--amber-soft); color: #A06B12; }
+  .door-admin::after { background: var(--amber); }
+  .door-prd .d-ico { background: var(--clay-soft); color: var(--clay); }
+  .door-prd::after { background: var(--clay); }
+
+  .strip { margin-top: 46px; }
+  .strip h3 { font-size: 16px; margin-bottom: 12px; text-align: center; color: var(--ink-2); }
+  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 860px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .feat { padding: 14px 15px; font-size: 12.5px; color: var(--ink-2); }
+  .feat b { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink); margin-bottom: 4px; }
+  .feat b .icon { width: 15px; height: 15px; color: var(--spruce-mid); }
+
+  footer { text-align: center; margin-top: 54px; font-size: 12px; color: var(--ink-3); line-height: 1.9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero rise">
+    <div class="mark">扫</div>
+    <h1><span class="en">CLEANTURN · PROTOTYPE</span>PMS 清洁排程与房务回报系统</h1>
+    <p class="lead">从 Hostfully 自动抓取订房数据生成清洁任务；清洁人员在手机月历上只看到被授权的房源，拍照回报、记录事件流水账；照片按类型分级保留、到期自动删除。</p>
+    <div class="meta">
+      <span class="tag">PRD v1.0 草案</span>
+      <span class="tag">交互原型 · 虚构数据</span>
+      <span class="tag">Hostfully · Webhook + 定时兜底</span>
+      <span class="tag">温哥华 · 20+ 房源场景</span>
+    </div>
+  </div>
+
+  <div class="doors">
+    <a class="card door door-cleaner rise rise-1" href="cleaner.html">
+      <span class="d-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span>
+      <h2>清洁人员端</h2>
+      <p>手机月历 · 今日任务 · 接受/拒绝 · 当日入住提醒 · 进入信息只读 · 大按钮完成确认 · 异常回报 · 照片上传。可切换两名清洁人员，演示房源权限隔离。</p>
+      <span class="go">进入手机原型 →</span>
+    </a>
+    <a class="card door door-admin rise rise-2" href="admin.html">
+      <span class="d-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.5" height="9" rx="1.6"/><rect x="13" y="3.5" width="7.5" height="5.5" rx="1.6"/><rect x="13" y="11" width="7.5" height="9.5" rx="1.6"/><rect x="3.5" y="14.5" width="7.5" height="6" rx="1.6"/></svg></span>
+      <h2>管理员工作台</h2>
+      <p>今日排程与 back-to-back 置顶 · 待处理队列（拒单/超时） · 异常动态与费用 · 照片库分级保留与打包下载 · 房源/人员/价格 · Hostfully 同步健康 · 审计日志。</p>
+      <span class="go">进入桌面原型 →</span>
+    </a>
+    <a class="card door door-prd rise rise-3" href="prd.html">
+      <span class="d-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8L19 8v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M13.5 3.5V8H19M8.5 13h7M8.5 16.5h7"/></svg></span>
+      <h2>产品需求文档</h2>
+      <p>完整 PRD：角色权限矩阵、Hostfully 同步规则、指派状态机、事件流水账、照片保留策略、数据模型、技术架构、里程碑与 5 个待拍板的开放问题。</p>
+      <span class="go">在线阅读 PRD →</span>
+    </a>
+  </div>
+
+  <div class="strip rise rise-4">
+    <h3>四个差异化设计</h3>
+    <div class="feat-grid">
+      <div class="card feat"><b><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h10a1 1 0 0 1 1 1V20l-3-1.8L12 20l-3-1.8L6 20V4.5a1 1 0 0 1 1-1Z"/><path d="M9.5 8.5h5M9.5 12h5"/></svg>事件流水账</b>损坏、维修、补货、额外清洁：叙述 + 照片 + 费用，一单一账，可导出对账。</div>
+      <div class="card feat"><b><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>分级照片保留</b>完成照 3 天、异常照 ≥7 天，到期物理删除；留证可打包下载或转存云盘。</div>
+      <div class="card feat"><b><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 19.5 6v6c0 4.6-3.1 7.6-7.5 9-4.4-1.4-7.5-4.4-7.5-9V6Z"/><path d="M9 12l2.2 2.2L15.5 9.8"/></svg>房源级权限隔离</b>主要/次要清洁人员 + 自动归属；拒单自动转派；RLS 数据库层强制可见范围。</div>
+      <div class="card feat"><b><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 3.8v4h-4"/></svg>改期自动联动</b>Webhook + 每日 21:00/6:00/10:00 兜底；订单取消改期，任务与提醒同步更新。</div>
+    </div>
+  </div>
+
+  <footer>
+    CleanTurn 为工作代号 · 本原型所有房源、人员、密码、订单均为虚构演示数据<br>
+    PRD v1.0 · 2026-07 · 原型不含后端，交互为本地模拟
+  </footer>
+</div>
+</body>
+</html>
