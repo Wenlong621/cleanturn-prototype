@@ -8,7 +8,7 @@
 |---|---|
 | [index.html](index.html) | 入口页 |
 | [cleaner.html](cleaner.html) | 清洁人员端原型（手机模拟，可切换人员演示权限隔离） |
-| [admin.html](admin.html) | 管理员工作台原型（今日排程 / 待处理队列 / 异常 / 照片库 / 房源 / 审计） |
+| [admin.html](admin.html) | 管理员工作台原型（英文界面：今日排程 / 待处理队列 / 异常 / 照片库 / 房源 / 审计） |
 | [prd.html](prd.html) / [PRD.md](PRD.md) | 产品需求文档 v1.0 |
 
 ## 原型可以演示什么

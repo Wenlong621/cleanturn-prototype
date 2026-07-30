@@ -415,7 +415,7 @@
     const reader = new FileReader();
     reader.onload = ev => {
       const isIssue = t.status === "issue";
-      t.photos.push({ tag: isIssue ? "issue" : "routine", label: "刚刚上传", src: ev.target.result });
+      t.photos.push({ tag: isIssue ? "issue" : "routine", label: "刚刚上传", labelEn: "Just uploaded", src: ev.target.result });
       render();
       toast(isIssue ? "异常照已上传（保留 ≥7 天）" : "完成照已上传（保留 3 天）", ICONS.camera);
     };

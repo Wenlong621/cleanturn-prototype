@@ -1,6 +1,8 @@
 /* CleanTurn 原型 · 虚构演示数据与共享工具
    所有房源、人员、密码、价格均为虚构，仅用于原型演示。
-   任务日期相对"今天"动态生成，原型任何时候打开都是活的。 */
+   任务日期相对"今天"动态生成，原型任何时候打开都是活的。
+   语言约定：清洁端中文；管理端英文（业主要求）。
+   共享数据提供双语字段（alias/aliasEn 等），管理端专用数据（QUEUE/SYNC/AUDIT）直接为英文。 */
 
 (function (global) {
   "use strict";
@@ -13,6 +15,16 @@
   const fmtYMD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const fmtMDW = d => `${fmtMD(d)} ${WEEK[d.getDay()]}`;
+  /* 英文日期（管理端） */
+  const MON_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const WEEK_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const fmtMDen = d => `${MON_EN[d.getMonth()]} ${d.getDate()}`;
+  const fmtMDWen = d => `${WEEK_EN[d.getDay()]}, ${MON_EN[d.getMonth()]} ${d.getDate()}`;
+  const t12 = s => {
+    if (!s) return s;
+    const [h, m] = s.split(":").map(Number);
+    return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? "PM" : "AM"}`;
+  };
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   /* ---------- 图标（描边 SVG） ---------- */
@@ -57,47 +69,61 @@
     note: I('<path d="M5 4.5h14v12l-4 4H5Z"/><path d="M15 20.5v-4h4"/>'),
   };
 
-  /* ---------- 状态元数据 ---------- */
+  /* ---------- 状态元数据（label 中文 / labelEn 英文） ---------- */
   const STATUS = {
-    offered:     { label: "待接受",   chip: "chip-offered" },
-    pending:     { label: "未开始",   chip: "chip-pending" },
-    in_progress: { label: "清洁中",   chip: "chip-progress" },
-    completed:   { label: "已完成",   chip: "chip-completed" },
-    issue:       { label: "异常",     chip: "chip-issue" },
-    cancelled:   { label: "已取消",   chip: "chip-cancelled" },
+    offered:     { label: "待接受",   labelEn: "Awaiting accept", chip: "chip-offered" },
+    pending:     { label: "未开始",   labelEn: "Not started",     chip: "chip-pending" },
+    in_progress: { label: "清洁中",   labelEn: "In progress",     chip: "chip-progress" },
+    completed:   { label: "已完成",   labelEn: "Completed",       chip: "chip-completed" },
+    issue:       { label: "异常",     labelEn: "Issue",           chip: "chip-issue" },
+    cancelled:   { label: "已取消",   labelEn: "Cancelled",       chip: "chip-cancelled" },
   };
   const EVENT_TYPES = { damage: "损坏", repair: "维修", restock: "补货", extra: "额外清洁", lost: "遗留物", other: "其他" };
+  const EVENT_TYPES_EN = { damage: "Damage", repair: "Repair", restock: "Restock", extra: "Extra clean", lost: "Lost & found", other: "Other" };
 
   /* ---------- 人员 ---------- */
   const CLEANERS = {
-    amy:   { id: "amy",   name: "陈阿美", short: "美", cls: "avatar-a" },
-    grace: { id: "grace", name: "刘思佳", short: "佳", cls: "avatar-g" },
+    amy:   { id: "amy",   name: "陈阿美", nameEn: "Amy Chen",  short: "美", shortEn: "A", cls: "avatar-a" },
+    grace: { id: "grace", name: "刘思佳", nameEn: "Grace Liu", short: "佳", shortEn: "G", cls: "avatar-g" },
   };
   const ADMIN_NAME = "温经理";
+  const ADMIN_NAME_EN = "Wen";
 
   /* ---------- 房源（虚构） ---------- */
   const PROPERTIES = [
-    { id: "P1", code: "MV-01", alias: "枫景别墅", area: "北温 · Maple Ct", beds: 4, baths: 3, primary: "amy", backup: "grace", autoAssign: true,  price: { amy: 300, grace: 300 },
-      secrets: { door: "1088#", garage: "2266", wifi: "MapleView-5G / stay1088", parking: "车道右侧可停 2 台", entry: "侧门进入，玄关柜有备用拖鞋" },
+    { id: "P1", code: "MV-01", alias: "枫景别墅", aliasEn: "Maple View Villa", area: "北温 · Maple Ct", areaEn: "North Van · Maple Ct", beds: 4, baths: 3, primary: "amy", backup: "grace", autoAssign: true, price: { amy: 300, grace: 300 },
+      secrets: { door: "1088#", garage: "2266", wifi: "MapleView-5G / stay1088",
+        parking: "车道右侧可停 2 台", parkingEn: "Driveway right side, fits 2 cars",
+        entry: "侧门进入，玄关柜有备用拖鞋", entryEn: "Enter via side door; spare slippers in foyer cabinet" },
       logs: [
-        { off: -5,  type: "manual", by: "温经理", body: "正门换锁完成，新密码已同步到系统" },
-        { off: -8,  type: "manual", by: "陈阿美", body: "车库遥控器电量偏低，建议更换电池" },
-        { off: -16, type: "system", by: "系统",   body: "清洁价格调整：280 → 300 CAD（温经理）" },
+        { off: -5,  type: "manual", by: "Wen",       body: "Front door re-keyed; new code synced to system" },
+        { off: -8,  type: "manual", by: "Amy Chen",  body: "Garage remote battery low; suggest replacing" },
+        { off: -16, type: "system", by: "System",    body: "Per-clean rate changed: 280 → 300 CAD (by Wen)" },
       ] },
-    { id: "P2", code: "LS-02", alias: "湖畔小筑", area: "深湾 · Lakeshore", beds: 3, baths: 2, primary: "amy", backup: "grace", autoAssign: true,  price: { amy: 260, grace: 260 },
-      secrets: { door: "0713#", garage: "—", wifi: "Lakeside / calmwater", parking: "路边免费停车", entry: "湖侧木门直入" },
-      logs: [ { off: -11, type: "manual", by: "刘思佳", body: "洗衣机排水偏慢，已反馈房东观察" } ] },
-    { id: "P3", code: "HB-03", alias: "海港公寓", area: "市中心 · Harbour St", beds: 2, baths: 1, primary: "grace", backup: "amy", autoAssign: true,  price: { grace: 180, amy: 180 },
-      secrets: { door: "4520#", garage: "P2-33 车位", wifi: "HarbourLoft / seaview", parking: "地库访客位 30 分钟内免费", entry: "大堂刷码进入，电梯需拍卡" },
-      logs: [ { off: -3, type: "system", by: "系统", body: "进入信息更新：门锁密码已更换（温经理）" } ] },
-    { id: "P4", code: "KB-04", alias: "海滩之家", area: "基斯兰奴 · Kits Beach", beds: 3, baths: 2, primary: "amy", backup: null, autoAssign: false, price: { amy: 320 },
-      secrets: { door: "8806#", garage: "—", wifi: "KitsHouse / sunsand", parking: "屋前车道", entry: "钥匙盒在侧栏第二格" },
+    { id: "P2", code: "LS-02", alias: "湖畔小筑", aliasEn: "Lakeside Cottage", area: "深湾 · Lakeshore", areaEn: "Deep Cove · Lakeshore", beds: 3, baths: 2, primary: "amy", backup: "grace", autoAssign: true, price: { amy: 260, grace: 260 },
+      secrets: { door: "0713#", garage: "—", wifi: "Lakeside / calmwater",
+        parking: "路边免费停车", parkingEn: "Free street parking",
+        entry: "湖侧木门直入", entryEn: "Enter through the lakeside wooden gate" },
+      logs: [ { off: -11, type: "manual", by: "Grace Liu", body: "Washer drains slowly; owner notified, monitoring" } ] },
+    { id: "P3", code: "HB-03", alias: "海港公寓", aliasEn: "Harbour Loft", area: "市中心 · Harbour St", areaEn: "Downtown · Harbour St", beds: 2, baths: 1, primary: "grace", backup: "amy", autoAssign: true, price: { grace: 180, amy: 180 },
+      secrets: { door: "4520#", garage: "P2-33 车位", garageEn: "Stall P2-33", wifi: "HarbourLoft / seaview",
+        parking: "地库访客位 30 分钟内免费", parkingEn: "Visitor parking in garage, free under 30 min",
+        entry: "大堂刷码进入，电梯需拍卡", entryEn: "Lobby code entry; elevator needs fob" },
+      logs: [ { off: -3, type: "system", by: "System", body: "Access info updated: door code changed (by Wen)" } ] },
+    { id: "P4", code: "KB-04", alias: "海滩之家", aliasEn: "Kits Beach House", area: "基斯兰奴 · Kits Beach", areaEn: "Kitsilano · Kits Beach", beds: 3, baths: 2, primary: "amy", backup: null, autoAssign: false, price: { amy: 320 },
+      secrets: { door: "8806#", garage: "—", wifi: "KitsHouse / sunsand",
+        parking: "屋前车道", parkingEn: "Front driveway",
+        entry: "钥匙盒在侧栏第二格", entryEn: "Lockbox on side fence, second slot" },
       logs: [] },
-    { id: "P5", code: "BT-05", alias: "本拿比联排", area: "本拿比 · Townline", beds: 3, baths: 2.5, primary: "amy", backup: "grace", autoAssign: true, price: { amy: 220, grace: 220 },
-      secrets: { door: "3311#", garage: "1199", wifi: "Townhome5G / maple2026", parking: "车库 + 门前 1 位", entry: "车库侧门进入" },
+    { id: "P5", code: "BT-05", alias: "本拿比联排", aliasEn: "Burnaby Townhome", area: "本拿比 · Townline", areaEn: "Burnaby · Townline", beds: 3, baths: 2.5, primary: "amy", backup: "grace", autoAssign: true, price: { amy: 220, grace: 220 },
+      secrets: { door: "3311#", garage: "1199", wifi: "Townhome5G / maple2026",
+        parking: "车库 + 门前 1 位", parkingEn: "Garage + 1 spot out front",
+        entry: "车库侧门进入", entryEn: "Enter via garage side door" },
       logs: [] },
-    { id: "P6", code: "RS-06", alias: "列治文雅居", area: "列治文 · Garden City", beds: 2, baths: 2, primary: "grace", backup: "amy", autoAssign: true, price: { grace: 200, amy: 200 },
-      secrets: { door: "6688#", garage: "—", wifi: "GardenSuite / lulu888", parking: "楼下访客位登记车牌", entry: "北门快递柜旁入口" },
+    { id: "P6", code: "RS-06", alias: "列治文雅居", aliasEn: "Richmond Garden Suite", area: "列治文 · Garden City", areaEn: "Richmond · Garden City", beds: 2, baths: 2, primary: "grace", backup: "amy", autoAssign: true, price: { grace: 200, amy: 200 },
+      secrets: { door: "6688#", garage: "—", wifi: "GardenSuite / lulu888",
+        parking: "楼下访客位登记车牌", parkingEn: "Visitor stalls downstairs; register plate",
+        entry: "北门快递柜旁入口", entryEn: "North entrance beside parcel lockers" },
       logs: [] },
   ];
   const prop = id => PROPERTIES.find(p => p.id === id);
@@ -114,50 +140,55 @@
     guests: o.guests || 2,
     guestName: o.guestName || "—",
     note: o.note || "",
+    noteEn: o.noteEn || "",
     changed: o.changed || null,        // {fromOff, toOff}
-    events: o.events || [],            // {type, body, cost, by, photos}
-    photos: o.photos || [],            // {tag:'routine'|'issue', label}
+    events: o.events || [],            // {type, body, bodyEn, cost, by, photos}
+    photos: o.photos || [],            // {tag:'routine'|'issue', label, labelEn}
     issueOpen: !!o.issueOpen,
     assignNote: o.assignNote || "",
   });
 
   const TASKS = [
     /* 过去（历史记录 & 日历密度） */
-    T(-20, "P2", "amy",   "completed", { guests: 2, guestName: "S. Park",  photos: [{ tag: "routine", label: "客厅" }, { tag: "routine", label: "厨房" }] }),
-    T(-17, "P1", "amy",   "completed", { guests: 5, guestName: "J. Wong",  photos: [{ tag: "routine", label: "全屋" }] }),
-    T(-14, "P4", "amy",   "completed", { guests: 3, guestName: "L. Brown", photos: [{ tag: "routine", label: "卧室" }] }),
-    T(-12, "P3", "grace", "completed", { guests: 2, guestName: "K. Sato",  photos: [{ tag: "routine", label: "全屋" }] }),
+    T(-20, "P2", "amy",   "completed", { guests: 2, guestName: "S. Park",  photos: [{ tag: "routine", label: "客厅", labelEn: "Living room" }, { tag: "routine", label: "厨房", labelEn: "Kitchen" }] }),
+    T(-17, "P1", "amy",   "completed", { guests: 5, guestName: "J. Wong",  photos: [{ tag: "routine", label: "全屋", labelEn: "Whole home" }] }),
+    T(-14, "P4", "amy",   "completed", { guests: 3, guestName: "L. Brown", photos: [{ tag: "routine", label: "卧室", labelEn: "Bedroom" }] }),
+    T(-12, "P3", "grace", "completed", { guests: 2, guestName: "K. Sato",  photos: [{ tag: "routine", label: "全屋", labelEn: "Whole home" }] }),
     T(-9,  "P5", "grace", "completed", { guests: 4, guestName: "A. Gill",  photos: [] }),
     T(-7,  "P6", "grace", "completed", { guests: 2, guestName: "D. Kim",   photos: [] }),
-    T(-6,  "P6", "grace", "cancelled", { guests: 2, guestName: "T. Zhao",  note: "订单在 Hostfully 取消，任务自动关闭" }),
-    T(-5,  "P2", "amy",   "completed", { guests: 3, guestName: "M. Ross",  photos: [{ tag: "routine", label: "客厅" }] }),
+    T(-6,  "P6", "grace", "cancelled", { guests: 2, guestName: "T. Zhao",  note: "订单在 Hostfully 取消，任务自动关闭", noteEn: "Booking cancelled in Hostfully; task auto-closed" }),
+    T(-5,  "P2", "amy",   "completed", { guests: 3, guestName: "M. Ross",  photos: [{ tag: "routine", label: "客厅", labelEn: "Living room" }] }),
     T(-3,  "P1", "amy",   "issue",     { guests: 6, guestName: "H. Nguyen", b2b: false, issueOpen: true,
       note: "主卫马桶堵塞，无法在清洁时段内修复",
+      noteEn: "Ensuite toilet clogged; could not be fixed within the cleaning window",
       events: [
-        { type: "damage", body: "主卫马桶堵塞，疑似异物，已尝试皮搋无效", cost: 0,  by: "陈阿美", photos: 1 },
-        { type: "repair", body: "联系水管工上门疏通，45 分钟处理完毕",     cost: 80, by: "陈阿美", photos: 1 },
+        { type: "damage", body: "主卫马桶堵塞，疑似异物，已尝试皮搋无效", bodyEn: "Ensuite toilet clogged, likely foreign object; plunger didn't work", cost: 0,  by: "陈阿美", photos: 1 },
+        { type: "repair", body: "联系水管工上门疏通，45 分钟处理完毕",     bodyEn: "Plumber called in; cleared in 45 minutes", cost: 80, by: "陈阿美", photos: 1 },
       ],
-      photos: [{ tag: "issue", label: "主卫 · 堵塞" }, { tag: "issue", label: "疏通后" }] }),
-    T(-1,  "P4", "amy",   "completed", { guests: 2, guestName: "E. Fraser", photos: [{ tag: "routine", label: "客厅" }, { tag: "routine", label: "厨房" }, { tag: "routine", label: "浴室" }] }),
-    T(-1,  "P3", "grace", "completed", { guests: 2, guestName: "Y. Lin",    photos: [{ tag: "routine", label: "全屋" }] }),
+      photos: [{ tag: "issue", label: "主卫 · 堵塞", labelEn: "Ensuite · clog" }, { tag: "issue", label: "疏通后", labelEn: "After clearing" }] }),
+    T(-1,  "P4", "amy",   "completed", { guests: 2, guestName: "E. Fraser", photos: [{ tag: "routine", label: "客厅", labelEn: "Living room" }, { tag: "routine", label: "厨房", labelEn: "Kitchen" }, { tag: "routine", label: "浴室", labelEn: "Bathroom" }] }),
+    T(-1,  "P3", "grace", "completed", { guests: 2, guestName: "Y. Lin",    photos: [{ tag: "routine", label: "全屋", labelEn: "Whole home" }] }),
 
     /* 今天 */
-    T(0, "P1", "amy",   "in_progress", { b2b: true, guests: 4, guestName: "R. Chen", note: "客人 16:00 入住，优先主卧与厨房",
-      events: [{ type: "restock", body: "洗手液耗尽，需补充 2 瓶", cost: 0, by: "陈阿美", photos: 0 }] }),
-    T(0, "P5", "amy",   "pending",     { guests: 3, guestName: "B. Singh", nextCheckin: null, note: "明日无入住，可安排在下午" }),
+    T(0, "P1", "amy",   "in_progress", { b2b: true, guests: 4, guestName: "R. Chen",
+      note: "客人 16:00 入住，优先主卧与厨房", noteEn: "Guest arrives 4 PM; prioritize master bedroom & kitchen",
+      events: [{ type: "restock", body: "洗手液耗尽，需补充 2 瓶", bodyEn: "Hand soap out; need 2 refills", cost: 0, by: "陈阿美", photos: 0 }] }),
+    T(0, "P5", "amy",   "pending",     { guests: 3, guestName: "B. Singh", nextCheckin: null,
+      note: "明日无入住，可安排在下午", noteEn: "No arrival tomorrow; afternoon is fine" }),
     T(0, "P3", "grace", "offered",     { b2b: true, guests: 2, guestName: "M. Liu", assignNote: "您是该房源主要清洁人员" }),
     T(0, "P6", "grace", "pending",     { guests: 2, guestName: "C. Wang", nextCheckin: null }),
 
     /* 未来 */
     T(1, "P2", "amy",   "pending",  { guests: 4, guestName: "P. Martin" }),
     T(1, "P4", "amy",   "offered",  { guests: 2, guestName: "N. Silva", assignNote: "该房源为手动指派（未开启自动归属）" }),
-    T(3, "P6", "grace", "pending",  { guests: 2, guestName: "T. Ito", changed: { fromOff: 1, toOff: 3 }, note: "客人在 Hostfully 延长住宿，退房日变更" }),
+    T(3, "P6", "grace", "pending",  { guests: 2, guestName: "T. Ito", changed: { fromOff: 1, toOff: 3 },
+      note: "客人在 Hostfully 延长住宿，退房日变更", noteEn: "Guest extended the stay in Hostfully; checkout date moved" }),
     T(4, "P1", "amy",   "pending",  { b2b: true, guests: 5, guestName: "G. Adams" }),
     T(6, "P3", "grace", "pending",  { guests: 2, guestName: "W. Zhou" }),
     T(8, "P5", "amy",   "pending",  { guests: 4, guestName: "F. Dubois" }),
   ];
 
-  /* ---------- 通知 ---------- */
+  /* ---------- 通知（清洁端 · 中文） ---------- */
   const NOTIFS = {
     amy: [
       { off: 0,  time: "07:00", kind: "remind", title: "今日 2 项清洁任务", body: "枫景别墅（当日入住，16:00 前完成）、本拿比联排" },
@@ -171,31 +202,31 @@
     ],
   };
 
-  /* ---------- 管理端队列 / 同步 / 审计 ---------- */
+  /* ---------- 管理端专用数据（英文） ---------- */
   const QUEUE = [
-    { kind: "offer",   title: "海港公寓 · 今日（当日入住）", body: "已指派主要人员刘思佳，等待接受 · 已等待 1 小时 12 分", level: "serious" },
-    { kind: "offer",   title: `海滩之家 · ${fmtMD(D(1))}`, body: "房源未开启自动归属，已手动指派陈阿美，等待接受", level: "warn" },
-    { kind: "decline", title: "转派记录 · 湖畔小筑", body: `${fmtMD(D(-2))} 主要人员拒单 → 已自动转派次要人员并通知（示例记录）`, level: "info" },
+    { kind: "offer",   title: "Harbour Loft · Today (same-day check-in)", body: "Offered to primary cleaner Grace Liu · waiting 1h 12m", level: "serious" },
+    { kind: "offer",   title: `Kits Beach House · ${fmtMDen(D(1))}`, body: "Auto-assign is off; manually offered to Amy Chen, awaiting accept", level: "warn" },
+    { kind: "decline", title: "Reassignment log · Lakeside Cottage", body: `${fmtMDen(D(-2))}: primary declined → auto-reassigned to backup, admin notified (sample)`, level: "info" },
   ];
 
   const SYNC = {
-    webhook: { ok: true, last: "09:41", event: "新订单建立 · 湖畔小筑（Hostfully webhook）" },
+    webhook: { ok: true, last: "9:41 AM", event: "New booking created · Lakeside Cottage (Hostfully webhook)" },
     runs: [
-      { label: `昨日 21:00 兜底同步`, result: "3 项变更", ok: true },
-      { label: `今日 06:00 兜底同步`, result: "无变更", ok: true },
-      { label: `今日 10:00 兜底同步`, result: "1 项变更（列治文雅居改期）", ok: true },
+      { label: "Yesterday 9:00 PM fallback sync", result: "3 changes", ok: true },
+      { label: "Today 6:00 AM fallback sync", result: "no changes", ok: true },
+      { label: "Today 10:00 AM fallback sync", result: "1 change (Richmond Garden Suite rescheduled)", ok: true },
     ],
   };
 
   const AUDIT = [
-    { off: 0,  time: "10:01", actor: "系统",   action: `同步：列治文雅居订单改期，任务 ${fmtMD(D(1))} → ${fmtMD(D(3))}，已通知刘思佳` },
-    { off: 0,  time: "09:41", actor: "系统",   action: "Webhook：新订单建立（湖畔小筑），已生成清洁任务" },
-    { off: 0,  time: "08:15", actor: "陈阿美", action: "任务状态：枫景别墅 未开始 → 清洁中" },
-    { off: -1, time: "18:36", actor: "温经理", action: "异常处理：枫景别墅 马桶堵塞 → 已受理，维修费用 CA$80 入账" },
-    { off: -1, time: "09:20", actor: "温经理", action: "权限变更：授权 刘思佳 为 海滩之家 次要清洁人员（后撤销）" },
-    { off: -2, time: "14:02", actor: "温经理", action: "进入信息：海港公寓 门锁密码更新" },
-    { off: -3, time: "21:00", actor: "系统",   action: "照片清理：3 张完成照到期，已物理删除并同步移除前端" },
-    { off: -16, time: "11:30", actor: "温经理", action: "价格调整：枫景别墅 每次清洁 280 → 300 CAD" },
+    { off: 0,  time: "10:01", actor: "System",    action: `Sync: Richmond Garden Suite booking rescheduled; task moved ${fmtMDen(D(1))} → ${fmtMDen(D(3))}; Grace Liu notified` },
+    { off: 0,  time: "09:41", actor: "System",    action: "Webhook: new booking (Lakeside Cottage); cleaning task created" },
+    { off: 0,  time: "08:15", actor: "Amy Chen",  action: "Task status: Maple View Villa — Not started → In progress" },
+    { off: -1, time: "18:36", actor: "Wen",       action: "Issue handled: Maple View Villa toilet clog accepted; CA$80 repair cost recorded" },
+    { off: -1, time: "09:20", actor: "Wen",       action: "Access change: granted Grace Liu backup on Kits Beach House (later revoked)" },
+    { off: -2, time: "14:02", actor: "Wen",       action: "Access info: Harbour Loft door code updated" },
+    { off: -3, time: "21:00", actor: "System",    action: "Photo cleanup: 3 routine photos expired; hard-deleted and removed from the app" },
+    { off: -16, time: "11:30", actor: "Wen",      action: "Rate change: Maple View Villa per-clean 280 → 300 CAD" },
   ];
 
   /* ---------- 共享 UI ---------- */
@@ -210,7 +241,7 @@
     setTimeout(() => t.remove(), 2800);
   }
 
-  function confirmModal({ title, body, okText = "确认", danger = false, onOk }) {
+  function confirmModal({ title, body, okText = "确认", cancelText = "再想想", danger = false, onOk }) {
     const mask = document.createElement("div");
     mask.className = "modal-mask";
     mask.innerHTML = `
@@ -218,7 +249,7 @@
         <h3>${esc(title)}</h3>
         <p>${body}</p>
         <div class="modal-actions">
-          <button class="btn btn-ghost" data-act="cancel">再想想</button>
+          <button class="btn btn-ghost" data-act="cancel">${esc(cancelText)}</button>
           <button class="btn ${danger ? "btn-danger-ghost" : "btn-primary"}" data-act="ok">${esc(okText)}</button>
         </div>
       </div>`;
@@ -230,12 +261,14 @@
   }
 
   const cleanerName = id => (CLEANERS[id] ? CLEANERS[id].name : "未指派");
+  const cleanerNameEn = id => (CLEANERS[id] ? CLEANERS[id].nameEn : "Unassigned");
 
   global.CT = {
     TODAY, D, fmtMD, fmtYMD, fmtMDW, WEEK, esc,
-    ICONS, STATUS, EVENT_TYPES,
-    CLEANERS, ADMIN_NAME, PROPERTIES, prop, TASKS,
+    fmtMDen, fmtMDWen, t12,
+    ICONS, STATUS, EVENT_TYPES, EVENT_TYPES_EN,
+    CLEANERS, ADMIN_NAME, ADMIN_NAME_EN, PROPERTIES, prop, TASKS,
     NOTIFS, QUEUE, SYNC, AUDIT,
-    toast, confirmModal, cleanerName,
+    toast, confirmModal, cleanerName, cleanerNameEn,
   };
 })(window);
